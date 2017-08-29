@@ -794,8 +794,8 @@ public class Chess extends Pane {
     private boolean kingMovementCheck(int oldX, int oldY, int newX, int newY) {
         //Castling 
         if (Math.abs(oldX - newX) == 2 && Math.abs(oldY - newY) == 0) {
-            //Make sure the king has not moved.
-            if (board[oldX][oldY].getPiece().hasMoved()) {
+            //Make sure the king has not moved and that it is not in check
+            if (board[oldX][oldY].getPiece().hasMoved() || inCheck(oldX, oldY) {
                 return false;
             }
             //King side
