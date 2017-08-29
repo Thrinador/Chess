@@ -219,6 +219,7 @@ public class ChessIO {
             }
             game.makeMove(oldX, oldY, newX, newY, pp);
         }
+        fileIn.close();        
         return file.getAbsolutePath();
     }
 
