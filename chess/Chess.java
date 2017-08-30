@@ -13,9 +13,10 @@ import javafx.stage.*;
 
 /**
  * Chess is a Pane extension that represents a chess board. Chess contains all
- * the logic on how pieces can move and ends when either a checkmate or draw 
+ * the logic on how pieces can move and ends when either a checkmate or draw
  * happens. Chess works by making an 8x8 board of Tiles and then assigning
  * piece's to those tiles.
+ *
  * @author Ben Clark, Polina Eremenko
  */
 public class Chess extends Pane {
@@ -106,7 +107,7 @@ public class Chess extends Pane {
      * checkmate happens or some form of draw. When it changes driver deals with
      * what to do next.
      */
-    public BooleanProperty booleanProperty = new SimpleBooleanProperty(true);
+    public BooleanProperty booleanProperty;
 
     /**
      * The constructor for chess initilizes all the global variables and sets
@@ -114,6 +115,7 @@ public class Chess extends Pane {
      * tiles for the chess board and adds the appropriate pieces to those tiles.
      */
     public Chess() {
+        booleanProperty = new SimpleBooleanProperty(true);
         Group tileGroup = new Group();
         pieceGroup = new Group();
         board = new Tile[WIDTH][HEIGHT];
@@ -287,6 +289,8 @@ public class Chess extends Pane {
                     addMoveToHistory(oldX, oldY, newX, newY);
                     Alert alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Game Over");
+                    Window window = this.getScene().getWindow();
+                    alert.initOwner(window);
                     alert.setHeaderText(null);
                     if (turn) {
                         alert.setContentText("Black has Won the Game!");
@@ -441,6 +445,8 @@ public class Chess extends Pane {
         alert.setTitle("Game Over");
         alert.setHeaderText(null);
         alert.setContentText("Game is drawn by" + message);
+        Window window = this.getScene().getWindow();
+        alert.initOwner(window);
         alert.showAndWait();
         booleanProperty.setValue(false);
     }
@@ -577,6 +583,8 @@ public class Chess extends Pane {
         alert.setHeaderText(null);
         alert.setContentText("Choose a piece to promote the pawn to");
         alert.initStyle(StageStyle.UNDECORATED);
+        Window window = this.getScene().getWindow();
+        alert.initOwner(window);
 
         ButtonType queen = new ButtonType("Queen");
         ButtonType rook = new ButtonType("Rook");
@@ -795,7 +803,7 @@ public class Chess extends Pane {
         //Castling 
         if (Math.abs(oldX - newX) == 2 && Math.abs(oldY - newY) == 0) {
             //Make sure the king has not moved and that it is not in check
-            if (board[oldX][oldY].getPiece().hasMoved() || inCheck(oldX, oldY) {
+            if (board[oldX][oldY].getPiece().hasMoved() || inCheck(oldX, oldY)) {
                 return false;
             }
             //King side
@@ -949,9 +957,10 @@ public class Chess extends Pane {
     }
 
     /**
-     * horizontalMovementCheck takes in a starting location and an ending 
-     * location, then checks to see if this is a valid movement for either a 
+     * horizontalMovementCheck takes in a starting location and an ending
+     * location, then checks to see if this is a valid movement for either a
      * rook or a queen.
+     *
      * @param oldX starting x for the move
      * @param oldY starting y for the move
      * @param newX ending x for the move
@@ -966,8 +975,9 @@ public class Chess extends Pane {
 
     /**
      * horizontalCheckForPieces takes in a starting location and ending location
-     * and checks to see if there are no pieces in between them. Only for 
+     * and checks to see if there are no pieces in between them. Only for
      * straight line movements.
+     *
      * @param oldX starting x for the move
      * @param oldY starting y for the move
      * @param newX ending x for the move
@@ -1000,6 +1010,7 @@ public class Chess extends Pane {
     /**
      * diagonalMovementCheck takes in a starting location and ending location,
      * then checks if this is a valid diagonal movement for a piece.
+     *
      * @param oldX starting x for the move
      * @param oldY starting y for the move
      * @param newX ending x for the move
@@ -1014,6 +1025,7 @@ public class Chess extends Pane {
     /**
      * diagonalCheckForPieces checks to see if there are any pieces in the way
      * for a diagonal movement.
+     *
      * @param oldX starting x for the move
      * @param oldY starting y for the move
      * @param newX ending x for the move
@@ -1070,6 +1082,7 @@ public class Chess extends Pane {
 
     /**
      * returns the current game's history.
+     *
      * @return game's history
      */
     public ArrayList<String> getHistory() {
@@ -1078,6 +1091,7 @@ public class Chess extends Pane {
 
     /**
      * returns the current game's notationHistory.
+     *
      * @return game's notationHistory
      */
     public ArrayList<String> getNotationHistory() {

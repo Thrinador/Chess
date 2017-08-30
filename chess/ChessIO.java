@@ -25,12 +25,13 @@ public class ChessIO {
      * @param history checked to see if empty
      * @return whether or not the history is empty
      */
-    private static boolean checkForNewGame(ArrayList<String> history) {
+    private static boolean checkForNewGame(ArrayList<String> history, Stage primaryStage) {
         if (history.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Save");
             alert.setHeaderText(null);
             alert.setContentText("Can't save a new game.");
+            alert.initOwner(primaryStage);
             alert.showAndWait();
             return true;
         }
@@ -129,7 +130,7 @@ public class ChessIO {
      * @return save location or blank.
      */
     public static String saveGame(Stage primaryStage, String saveLocation, ArrayList<String> history, ArrayList<String> notationHistory) {
-        if (checkForNewGame(history)) {
+        if (checkForNewGame(history, primaryStage)) {
             return "";
         }
         String fileName;
@@ -154,7 +155,7 @@ public class ChessIO {
      */
     public static void saveGameAs(Stage primaryStage, ArrayList<String> history,
             ArrayList<String> notationHistory) {
-        if (checkForNewGame(history)) {
+        if (checkForNewGame(history, primaryStage)) {
             return;
         }
         String fileName = getSaveFileName(primaryStage);
@@ -219,7 +220,7 @@ public class ChessIO {
             }
             game.makeMove(oldX, oldY, newX, newY, pp);
         }
-        fileIn.close();        
+        fileIn.close();
         return file.getAbsolutePath();
     }
 

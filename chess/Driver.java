@@ -14,6 +14,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
@@ -47,9 +48,52 @@ public class Driver extends Application {
      * @param vbox the vbox that contains the game
      */
     private void newGame(VBox vbox) {
-        vbox.getChildren().remove(1);
+        if (vbox.getChildren().size() > 1) {
+            vbox.getChildren().remove(1);
+        }
         game = new Chess();
         vbox.getChildren().add(game);
+
+        game.booleanProperty.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+            //Game ended
+            ArrayList<String> history = game.getHistory();
+            if (!history.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Save");
+                alert.setHeaderText(null);
+                alert.setContentText("Do you want to save the game?");
+                ButtonType buttonTypeYes = new ButtonType("Yes");
+                ButtonType buttonTypeNo = new ButtonType("No");
+                alert.initOwner(primaryStage);
+                alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
+
+                Optional<ButtonType> result = alert.showAndWait();
+
+                if (result.get() == buttonTypeYes) {
+                    ChessIO.saveGame(primaryStage, saveLocation, history, game.getNotationHistory());
+                }
+            }
+
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Exit?");
+            alert.setHeaderText(null);
+            alert.setContentText("Do you want to exit the game or start "
+                    + "a new game?");
+            ButtonType buttonTypeNew = new ButtonType("New");
+            ButtonType buttonTypeExit = new ButtonType("Exit");
+
+            alert.getButtonTypes().setAll(buttonTypeNew, buttonTypeExit);
+            alert.initOwner(primaryStage);
+            Optional<ButtonType> result = alert.showAndWait();
+
+            if (result.get() == buttonTypeNew) {
+                newGame(vbox);
+
+            } else if (result.get() == buttonTypeExit) {
+                System.exit(0);
+            }
+        });
+
         saveLocation = null;
     }
 
@@ -60,6 +104,7 @@ public class Driver extends Application {
         ArrayList<String> history = game.getHistory();
         if (!history.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.initOwner(primaryStage);
             alert.setTitle("Save");
             alert.setHeaderText(null);
             alert.setContentText("Do you want to save the game?");
@@ -114,51 +159,11 @@ public class Driver extends Application {
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
-        this.game = new Chess();
         VBox vbox = new VBox(0);
 
-        game.booleanProperty.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-            //Game ended
-            ArrayList<String> history = game.getHistory();
-            if (!history.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                alert.setTitle("Save");
-                alert.setHeaderText(null);
-                alert.setContentText("Do you want to save the game?");
-                ButtonType buttonTypeYes = new ButtonType("Yes");
-                ButtonType buttonTypeNo = new ButtonType("No");
-
-                alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
-
-                Optional<ButtonType> result = alert.showAndWait();
-
-                if (result.get() == buttonTypeYes) {
-                    ChessIO.saveGame(primaryStage, saveLocation, history, game.getNotationHistory());
-                }
-            }
-
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Exit?");
-            alert.setHeaderText(null);
-            alert.setContentText("Do you want to exit the game or start "
-                    + "a new game?");
-            ButtonType buttonTypeNew = new ButtonType("New");
-            ButtonType buttonTypeExit = new ButtonType("Exit");
-
-            alert.getButtonTypes().setAll(buttonTypeNew, buttonTypeExit);
-
-            Optional<ButtonType> result = alert.showAndWait();
-
-            if (result.get() == buttonTypeNew) {
-                newGame(vbox);
-            } else if (result.get() == buttonTypeExit) {
-                System.exit(0);
-            }
-        });
-
         MenuBar menuBar = new MenuBar();
-
-        vbox.getChildren().addAll(menuBar, game);
+        
+        vbox.getChildren().add(menuBar);
         Scene scene = new Scene(vbox);
 
         Menu menuFile = new Menu("File");
@@ -204,6 +209,8 @@ public class Driver extends Application {
 
         menuBar.getMenus().addAll(menuFile, menuPlay);
 
+        newGame(vbox);
+        
         primaryStage.setTitle("Chess");
         primaryStage.getIcons().add(new Image("/Images/pawn_black.png"));
         primaryStage.setScene(scene);
