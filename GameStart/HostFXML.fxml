@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.collections.*?>
+<?import java.lang.String?>
+
+<GridPane fx:controller="GameStart.HostController"
+          xmlns:fx="http://javafx.com/fxml/1" alignment="center"
+          hgap="10" vgap="10" styleClass="root">
+
+    <padding>
+        <Insets top="25" right="25" bottom="10" left="25"/>
+    </padding>
+
+    <stylesheets>
+        <URL value="@Login.css" />
+    </stylesheets>
+
+    <Text id="welcome-text" text="Host"
+          GridPane.columnIndex="0" GridPane.rowIndex="0"
+          GridPane.columnSpan="2"/>
+    
+    <Text id="text" text="Game Name "
+          GridPane.columnIndex="0" GridPane.rowIndex="1"
+          GridPane.columnSpan="1"/>
+    
+    <TextField id="text" fx:id="gameName" text="" maxWidth="150" 
+               GridPane.columnIndex="1" GridPane.rowIndex="1"
+               GridPane.columnSpan="1"
+               onAction="#handleHostAction"/>
+    
+    <Text id="text" text="Color To Play "
+          GridPane.columnIndex="0" GridPane.rowIndex="2"
+          GridPane.columnSpan="1"/>
+    
+    <ComboBox id="text" minWidth="150" 
+              GridPane.columnIndex="1" GridPane.rowIndex="2"
+              GridPane.columnSpan="1">
+        <items>
+            <FXCollections fx:factory="observableArrayList" fx:id="text">
+                <String fx:value="White"/>
+                <String fx:value="Black"/>
+            </FXCollections>
+        </items>
+        <value>
+            <String fx:value="White" />
+        </value>
+    </ComboBox>
+    
+    <Button id="back" text="Cancel" minWidth="150" 
+            GridPane.columnIndex="0" GridPane.rowIndex="4"
+            GridPane.columnSpan="1"
+            onAction="#handleBackAction"
+            onKeyPressed="#handleBackAction" />
+    
+    <Button id="back" text="Host" minWidth="150" 
+            GridPane.columnIndex="1" GridPane.rowIndex="4"
+            GridPane.columnSpan="1"
+            onAction="#handleHostAction"/>
+
+</GridPane>

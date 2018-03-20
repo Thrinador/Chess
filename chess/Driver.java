@@ -1,168 +1,119 @@
 package chess;
 
-import java.io.File;
-import java.util.ArrayList;
+import GameStart.EntryController;
+import java.io.IOException;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
-import static javafx.application.Application.launch;
-import javafx.beans.value.ObservableValue;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
+import networking.Messages;
+import networking.ServerInfo;
+import networking.User;
+import javafx.scene.Parent;
+import javafx.scene.control.TextInputDialog;
 
 /**
- * Driver is the base of the Chess Application. It initializes the stage and
- * places the menu bar and Chess into a vbox. Calls ChessIO for the file input
- * output and deals with the board when a checkmate or draw happens.
+ * Driver is the base of the Game Application. It initializes the stage and
+ * places the menu bar and Game into a vbox. Deals with the board when an
+ * endgame happens.
  *
  * @author Ben Clark
  */
-public class Driver extends Application {
+public class Driver extends Parent {
 
-    /**
-     * The stage used throughout the program.
-     */
     private Stage primaryStage;
+    private VBox vbox;
+    private NewGame setup;
+    private User user;
 
-    /**
-     * The Chess game.
-     */
-    private Chess game;
-
-    /**
-     * The location if specified for the saves to happen
-     */
-    private String saveLocation;
-
-    /**
-     * newGame takes in the vbox that contains the game it resets the game, then
-     * adds it back to the vbox.
-     *
-     * @param vbox the vbox that contains the game
-     */
-    private void newGame(VBox vbox) {
-        if (vbox.getChildren().size() > 1) {
-            vbox.getChildren().remove(1);
-        }
-        game = new Chess();
-        vbox.getChildren().add(game);
-
-        game.booleanProperty.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-            //Game ended
-            ArrayList<String> history = game.getHistory();
-            if (!history.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                alert.setTitle("Save");
-                alert.setHeaderText(null);
-                alert.setContentText("Do you want to save the game?");
-                ButtonType buttonTypeYes = new ButtonType("Yes");
-                ButtonType buttonTypeNo = new ButtonType("No");
-                alert.initOwner(primaryStage);
-                alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
-
-                Optional<ButtonType> result = alert.showAndWait();
-
-                if (result.get() == buttonTypeYes) {
-                    ChessIO.saveGame(primaryStage, saveLocation, history, game.getNotationHistory());
-                }
-            }
-
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Exit?");
-            alert.setHeaderText(null);
-            alert.setContentText("Do you want to exit the game or start "
-                    + "a new game?");
-            ButtonType buttonTypeNew = new ButtonType("New");
-            ButtonType buttonTypeExit = new ButtonType("Exit");
-
-            alert.getButtonTypes().setAll(buttonTypeNew, buttonTypeExit);
-            alert.initOwner(primaryStage);
-            Optional<ButtonType> result = alert.showAndWait();
-
-            if (result.get() == buttonTypeNew) {
-                newGame(vbox);
-
-            } else if (result.get() == buttonTypeExit) {
-                System.exit(0);
-            }
-        });
-
-        saveLocation = null;
+    public Driver(Stage s) {
+        this.primaryStage = s;
     }
 
-    /**
-     * exitGame if they have moved prompts them to save the game then exits.
-     */
     private void exitGame() {
-        ArrayList<String> history = game.getHistory();
-        if (!history.isEmpty()) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.initOwner(primaryStage);
-            alert.setTitle("Save");
-            alert.setHeaderText(null);
-            alert.setContentText("Do you want to save the game?");
-            ButtonType buttonTypeYes = new ButtonType("Yes");
-            ButtonType buttonTypeNo = new ButtonType("No");
+        if (vbox.getChildren().get(1) instanceof MultiplayerChess) {
+            MultiplayerChess chess
+                    = (MultiplayerChess) vbox.getChildren().get(1);
 
-            alert.getButtonTypes().setAll(buttonTypeYes, buttonTypeNo);
-
-            Optional<ButtonType> result = alert.showAndWait();
-
-            if (result.get() == buttonTypeYes) {
-                ChessIO.saveGame(primaryStage, saveLocation, history, game.getNotationHistory());
+            if (chess.isAlive()) {
+                chess.sendOnSocket(Messages.gameOver());
+                chess.endGame(false);
             }
         }
+
+        if (user.hasUsername()) {
+            try {
+                Messages.sendMessage(ServerInfo.SERVER_IP,
+                        ServerInfo.SERVER_PORT,
+                        Messages.unregister(user.getUsername()));
+            } catch (IOException ex) {
+
+            }
+        }
+
         System.exit(0);
     }
 
-    /**
-     * undoMove takes in the vbox that contains the game. It gets the current
-     * game history pulls the last move from it and reloads the game from a temp
-     * file
-     *
-     * @param vbox the vbox that contains the game.
-     */
-    private void undoMove(VBox vbox) {
-        ArrayList<String> history = game.getHistory();
-        if (history.size() == 1) {
-            newGame(vbox);
-            return;
+    private String getNewServerIp() {
+        TextInputDialog dialog = new TextInputDialog();
+
+        dialog.setTitle("Change Server IP");
+        dialog.setHeaderText(null);
+        dialog.setGraphic(null);
+        dialog.initOwner(primaryStage);
+        dialog.setContentText("Please Enter a new IP address for the server");
+
+        Optional<String> message = dialog.showAndWait();
+        if (message.isPresent()) {
+            String serverIp = message.get();
+            if (serverIp.length() <= 15 && serverIp.length() >= 1) {
+                return serverIp;
+            }
         }
-        if (history.isEmpty()) {
-            return;
+        return null;
+    }
+
+    private void changeServerIp() {
+        String serverIp = getNewServerIp();
+        if (serverIp != null) {
+            ServerInfo.SERVER_IP = serverIp;
         }
-        history.remove(history.size() - 1);
-        String currentSaveFile = saveLocation;
-        saveLocation = "temp.chess";
-        ChessIO.saveGame(primaryStage, saveLocation, history, game.getNotationHistory());
-        File file = new File("temp.chess");
-        ChessIO.importGame(vbox, file, game);
-        saveLocation = currentSaveFile;
-        file.delete();
-        file = new File("temp.pgn");
-        file.delete();
+    }
+
+    private void newGame() {
+        try {
+            System.out.println("NewGame");
+            Parent multi = FXMLLoader.load(getClass().getResource("/GameStart/EntryFXML.fxml"));
+            Scene scene = new Scene(multi);
+            primaryStage.setScene(scene);
+            primaryStage.show();
+        } catch (IOException ex) {
+            Logger.getLogger(EntryController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
-     * start sets up the GUI. It initializes the Chess game, then makes the menu
-     * bar and adds both to the vbox. Finally shows the GUI.
+     * This function starts the application. It is given a Stage to add the
+     * chess elements to.
      *
-     * @param primaryStage the stage for the game.
+     * @return
      */
-    @Override
-    public void start(Stage primaryStage) {
-        this.primaryStage = primaryStage;
-        VBox vbox = new VBox(0);
+    public Scene start() {
+        vbox = new VBox(0);
+        user = new User();
+        setup = new NewGame(primaryStage, vbox, user);
 
         MenuBar menuBar = new MenuBar();
-        
+
         vbox.getChildren().add(menuBar);
         Scene scene = new Scene(vbox);
 
@@ -170,60 +121,23 @@ public class Driver extends Application {
 
         MenuItem newMenuItem = new MenuItem("New");
         menuFile.getItems().add(newMenuItem);
-        newMenuItem.setOnAction(actionEvent -> newGame(vbox));
+        newMenuItem.setOnAction(ex -> this.newGame());
 
-        MenuItem saveMenuItem = new MenuItem("Save");
-        menuFile.getItems().add(saveMenuItem);
-        saveMenuItem.setOnAction(actionEvent
-                -> ChessIO.saveGame(primaryStage, saveLocation,
-                        game.getHistory(), game.getNotationHistory()));
-
-        MenuItem saveAsMenuItem = new MenuItem("SaveAs");
-        menuFile.getItems().add(saveAsMenuItem);
-        saveAsMenuItem.setOnAction(actionEvent
-                -> ChessIO.saveGameAs(primaryStage, game.getHistory(),
-                        game.getNotationHistory()));
-
-        MenuItem loadMenuItem = new MenuItem("Load");
-        menuFile.getItems().add(loadMenuItem);
-        loadMenuItem.setOnAction(actionEvent
-                -> {
-            ChessIO.loadGame(primaryStage, vbox, game);
-            game = (Chess) vbox.getChildren().get(1);
-        });
+        MenuItem changeMenuItem = new MenuItem("Change Server Ip");
+        menuFile.getItems().add(changeMenuItem);
+        changeMenuItem.setOnAction(actionEvent -> changeServerIp());
 
         MenuItem exitMenuItem = new MenuItem("Exit");
         menuFile.getItems().add(exitMenuItem);
         exitMenuItem.setOnAction(actionEvent -> exitGame());
 
-        Menu menuPlay = new Menu("Play");
+        menuBar.getMenus().addAll(menuFile);
 
-        MenuItem undoMenuItem = new MenuItem("Undo");
-        menuPlay.getItems().add(undoMenuItem);
-        undoMenuItem.setOnAction(actionEvent -> undoMove(vbox));
-
-        MenuItem notationMenuItem = new MenuItem("Notation");
-        menuPlay.getItems().add(notationMenuItem);
-        notationMenuItem.setOnAction(actionEvent
-                -> ChessIO.getNotation(game.getNotationHistory()));
-
-        menuBar.getMenus().addAll(menuFile, menuPlay);
-
-        newGame(vbox);
-        
-        primaryStage.setTitle("Chess");
-        primaryStage.getIcons().add(new Image("/Images/pawn_black.png"));
-        primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(actionEvent -> exitGame());
-        primaryStage.show();
-    }
 
-    /**
-     * main launches the application
-     *
-     * @param args unused.
-     */
-    public static void main(String[] args) {
-        launch(args);
+        SingleplayerChess board = new SingleplayerChess();
+        vbox.getChildren().add(board);
+
+        return scene;
     }
 }
