@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<GridPane fx:controller="GameStart.MultiController"
+          xmlns:fx="http://javafx.com/fxml/1" alignment="center"
+          hgap="10" vgap="10" styleClass="root">
+
+    <padding>
+        <Insets top="25" right="25" bottom="10" left="25"/>
+    </padding>
+
+    <stylesheets>
+        <URL value="@Login.css" />
+    </stylesheets>
+
+    <Text id="welcome-text" text="Multiplayer"
+          GridPane.columnIndex="0" GridPane.rowIndex="0"
+          GridPane.columnSpan="2"/>
+
+    <Button id="rand" text="Random Game" minWidth="300" 
+            GridPane.columnIndex="0" GridPane.rowIndex="2"
+            GridPane.columnSpan="2"
+            onAction="#handleRandomAction"/>
+    
+    <Button id="host" text="Host Game" minWidth="300" 
+            GridPane.columnIndex="0" GridPane.rowIndex="3"
+            GridPane.columnSpan="2"
+            onAction="#handleHostAction"/>
+
+    <Button id="join" text="Join Game" minWidth="300" 
+            GridPane.columnIndex="0" GridPane.rowIndex="4"
+            GridPane.columnSpan="2"
+            onAction="#handleJoinAction"/>
+    
+    <Button id="join" text="Settings" minWidth="300" 
+            GridPane.columnIndex="0" GridPane.rowIndex="5"
+            GridPane.columnSpan="2"
+            onAction="#handleSettingsAction"/>
+    
+    <Button id="back" text="Cancel" minWidth="300" 
+            GridPane.columnIndex="0" GridPane.rowIndex="6"
+            GridPane.columnSpan="2"
+            onAction="#handleBackAction"
+            onKeyPressed="#handleBackAction" />
+
+</GridPane>

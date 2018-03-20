@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/game/MultiplayerGame.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/game/KingLocation.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/chess/Driver.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/game/CharacterHolder.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/chess/NewGame.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/game/Piece.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/networking/User.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/GameStart/ChessIntro.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/GameStart/Entry.fxml</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/chess/SingleplayerChess.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/game/Tile.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/networking/HostConnection.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/networking/ServerInfo.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/GameStart/Login.css</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/game/PieceType.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/GameStart/Multi.fxml</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/game/SingleplayerGame.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/networking/Chat.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/game/MoveType.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/GameStart/MultiController.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/GameStart/FXMLDocumentController.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/networking/Score.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/networking/Messages.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/chess/MultiplayerChess.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/networking/Player.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/game/Game.java</file>
+            <file>file:/C:/Users/benji/Documents/432_Chess/ChessClient/src/networking/Listen.java</file>
+        </group>
+    </open-files>
+</project-private>
