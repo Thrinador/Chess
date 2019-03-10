@@ -24,8 +24,9 @@ import networking.Player;
 import networking.HostConnection;
 
 /**
- * Used as a factory for building a new Game game. That can be single player or
- * multiplayer. If it is multiplayer it deals with hooking up the two players.
+ * OLD TO BE DELETED
+ * 
+ * has code that is useful for multiplayer games.
  *
  * @author Ben Clark
  */

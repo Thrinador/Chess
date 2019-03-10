@@ -15,13 +15,13 @@ import javafx.stage.Stage;
 
 /**
  *
- * @author benji
+ * @author Ben Clark
  */
 public class SinglePlayerStage extends Parent {
 
     private Stage primaryStage;
     private VBox vbox;
-    private NewGame setup;
+    //private NewGame setup;
 
     public SinglePlayerStage(Stage s) {
         this.primaryStage = s;

@@ -57,7 +57,7 @@ public class SingleplayerGame extends Game {
                 resetDrawConditions();
                 if (newY == 0 || newY == 7) {
 
-                    pawnPromotion(newX, newY, new CharacterHolder(pp));
+                    pawnPromotion(newX, newY, new Character(pp));
                 } else if (Math.abs(newY - oldY) == 2) {
                     doubleMovePawn = piece;
                 } else {

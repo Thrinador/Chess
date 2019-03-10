@@ -42,7 +42,7 @@
             GridPane.columnSpan="2"
             onAction="#handleSettingsAction"/>
     
-    <Button id="back" text="Cancel" minWidth="300" 
+    <Button id="back" text="Back" minWidth="300" 
             GridPane.columnIndex="0" GridPane.rowIndex="6"
             GridPane.columnSpan="2"
             onAction="#handleBackAction"

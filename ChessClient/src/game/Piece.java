@@ -16,7 +16,6 @@ public class Piece extends ImageView {
     private boolean team;
     private boolean moved;
     private PieceType type;
-    private final Game game;
 
     /**
      * Piece takes in a string location for it's image, its x,y location, the
@@ -32,7 +31,6 @@ public class Piece extends ImageView {
     public Piece(String url, int x, int y, boolean team, PieceType type, Game game) {
         super(url);
         move(x, y);
-        this.game = game;
         moved = false;
         this.team = team;
         this.type = type;

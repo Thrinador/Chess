@@ -20,13 +20,13 @@ import networking.User;
 
 /**
  *
- * @author benji
+ * @author Ben Clark
  */
 public class MultiplayerStage {
 
     private Stage primaryStage;
     private VBox vbox;
-    private NewGame setup;
+    //private NewGame setup;
     private User user;
 
     public MultiplayerStage(Stage s) {
@@ -104,7 +104,7 @@ public class MultiplayerStage {
     public Scene start() {
         vbox = new VBox(0);
         user = new User();
-        setup = new NewGame(primaryStage, vbox, user);
+        //setup = new NewGame(primaryStage, vbox, user);
 
         MenuBar menuBar = new MenuBar();
 

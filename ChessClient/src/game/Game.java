@@ -44,11 +44,6 @@ public abstract class Game extends Pane {
      */
     public static final int OFFSET = 10;
 
-    /**
-     * Turns a given piece type into a char.
-     */
-    public static final char[] TYPE_TO_LETTER = {' ', 'R', 'N', 'B', 'Q', 'K'};
-
     private boolean turn;
     private boolean team;
 
@@ -166,7 +161,7 @@ public abstract class Game extends Pane {
      * Then checks to see if that board is currently stored if it is increment
      * the value. if not then add the board with value to the map.
      */
-    protected void addBoardToMap() {
+    protected final void addBoardToMap() {
         ArrayList<Integer> currentBoard = new ArrayList<>();
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
@@ -258,7 +253,7 @@ public abstract class Game extends Pane {
         if (typeOfMove == MoveType.PAWN_PROMOTION) {
             int pieceNum = board[newX][newY].getPiece().getType().type - 1;
             history.add(oldX + " " + oldY + " " + newX + " " + newY + " "
-                    + TYPE_TO_LETTER[pieceNum]);
+                    + pieceNum);
         } else {
             history.add(oldX + " " + oldY + " " + newX + " " + newY);
         }
@@ -401,11 +396,11 @@ public abstract class Game extends Pane {
      * @param y the y location for the piece
      * @param pawnPromotion
      */
-    protected void pawnPromotion(int x, int y, CharacterHolder pawnPromotion) {
+    protected void pawnPromotion(int x, int y, char pawnPromotion) {
         Piece piece = board[x][y].getPiece();
         String color = turn ? "white" : "black";
-        if (pawnPromotion.getValue() != ' ') {
-            switch (pawnPromotion.getValue()) {
+        if (pawnPromotion != ' ') {
+            switch (pawnPromotion) {
                 case 'Q':
                 case 'q':
                     piece.setType(QUEEN);
@@ -435,7 +430,7 @@ public abstract class Game extends Pane {
             }
             return;
         }
-
+        
         Alert alert = new Alert(AlertType.NONE);
         alert.setTitle("Pawn Promotion");
         alert.setHeaderText(null);
@@ -451,23 +446,20 @@ public abstract class Game extends Pane {
 
         alert.getButtonTypes().setAll(queen, rook, knight, bishop);
         Optional<ButtonType> result = alert.showAndWait();
-        if (result.get() == queen) {
-            piece.setType(QUEEN);
-            piece.setImage(new Image("/Images/queen_" + color + ".png"));
-            pawnPromotion.setValue('q');
-        } else if (result.get() == rook) {
+        if (result.get() == rook) {
             piece.setType(ROOK);
             piece.setImage(new Image("/Images/rook_" + color + ".png"));
-            pawnPromotion.setValue('r');
         } else if (result.get() == bishop) {
             piece.setType(BISHOP);
             piece.setImage(new Image("/Images/bishop_" + color + ".png"));
-            pawnPromotion.setValue('b');
         } else if (result.get() == knight) {
             piece.setType(KNIGHT);
             piece.setImage(new Image("/Images/knight_" + color + ".png"));
-            pawnPromotion.setValue('n');
+        } else {
+            piece.setType(QUEEN);
+            piece.setImage(new Image("/Images/queen_" + color + ".png"));
         }
+        
         typeOfMove = MoveType.PAWN_PROMOTION;
     }
 
@@ -940,7 +932,7 @@ public abstract class Game extends Pane {
      *
      * @param team The new team state.
      */
-    public void setTeam(boolean team) {
+    public final void setTeam(boolean team) {
         this.team = team;
     }
 

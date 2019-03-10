@@ -17,7 +17,7 @@ public class MultiplayerGame extends Game {
 
     private final MultiplayerChess connection;
     private final String opponentUsername;
-    private CharacterHolder pawnPromotion;
+    private char pawnPro;
 
     /**
      * Constructor that takes in the Chess object we are operating on, the team
@@ -33,7 +33,7 @@ public class MultiplayerGame extends Game {
         connection = mul;
         setTeam(team);
         this.opponentUsername = opponentUsername;
-        pawnPromotion = new CharacterHolder();
+        pawnPro = ' ';
 
         //If we are playing black rotate the board
         if (!team) {
@@ -63,7 +63,7 @@ public class MultiplayerGame extends Game {
     @Override
     public boolean makeMove(int oldX, int oldY, int newX, int newY, char pp, boolean team) {
         if (checkMove(oldX, oldY, newX, newY, pp, team)) {
-            String message = networking.Messages.move(oldX, oldY, newX, newY, pawnPromotion.getValue());
+            String message = networking.Messages.move(oldX, oldY, newX, newY, pawnPro);
             connection.sendOnSocket(message);
             return true;
         }
@@ -83,7 +83,8 @@ public class MultiplayerGame extends Game {
      * @return Whether or not that was a valid move.
      */
     public boolean checkMove(int oldX, int oldY, int newX, int newY, char pp, boolean team) {
-        pawnPromotion.setValue(pp);
+        pawnPro = pp;
+        //pawnPromotion.setValue(pp);
         //Not your turn or no piece in starting location
         if (team != getTurn() || !board[oldX][oldY].hasPiece()) {
             return false;
@@ -119,7 +120,8 @@ public class MultiplayerGame extends Game {
             case PAWN:
                 resetDrawConditions();
                 if (newY == 0 || newY == 7) {
-                    runAndWait(() -> this.pawnPromotion(newX, newY, pawnPromotion));
+                    runAndWait(() -> this.pawnPromotion(newX, newY, pawnPro));
+                    pawnPro = this.board[newX][newY].getPiece().getType().type;
                 } else if (Math.abs(newY - oldY) == 2) {
                     doubleMovePawn = piece;
                 } else {
@@ -162,7 +164,6 @@ public class MultiplayerGame extends Game {
         // run synchronously on JavaFX thread
         if (Platform.isFxApplicationThread()) {
             action.run();
-            return;
         }
 
         // queue on JavaFX thread and wait for completion
