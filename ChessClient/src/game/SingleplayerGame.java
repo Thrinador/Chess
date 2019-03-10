@@ -77,17 +77,17 @@ public class SingleplayerGame extends Game {
             typeOfMove = MoveType.CHECK;
             if (checkMate()) {
                 addMoveToHistory(oldX, oldY, newX, newY);
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Game Over");
+                Alert mes = new Alert(Alert.AlertType.CONFIRMATION);
+                mes.setTitle("Game Over");
                 Window window = this.getScene().getWindow();
-                alert.initOwner(window);
-                alert.setHeaderText(null);
+                mes.initOwner(window);
+                mes.setHeaderText(null);
                 if (getTurn()) {
-                    alert.setContentText("Black has Won the Game!");
+                    mes.setContentText("Black has Won the Game!\nPlay again?");
                 } else {
-                    alert.setContentText("White has Won the Game!");
+                    mes.setContentText("White has Won the Game!\nPlay again?");
                 }
-                alert.showAndWait();
+                mes.showAndWait();
                 gameAlive.setValue(false);
             }
         }

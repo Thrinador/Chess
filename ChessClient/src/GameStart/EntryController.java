@@ -5,7 +5,7 @@
  */
 package GameStart;
 
-import chess.Driver;
+import chess.SinglePlayerStage;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
@@ -31,7 +31,7 @@ public class EntryController implements Initializable {
         System.out.println("Singleplayer");
 
         Stage appStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        Driver multi = new Driver(appStage);
+        SinglePlayerStage multi = new SinglePlayerStage(appStage);
         appStage.setScene(multi.start());
         appStage.show();
     }
