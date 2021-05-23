@@ -19,9 +19,9 @@ enum PieceType {
 }
 
 #[derive(Copy, Clone)]
-struct Point {
-    col: usize,
-    row: usize,
+pub struct Point {
+    pub col: usize,
+    pub row: usize,
 }
 
 #[derive(Copy, Clone)]
@@ -35,7 +35,7 @@ impl fmt::Display for Piece {
         let string_color = match &self.color {
             Color::Black => "B",
             Color::White => "W",
-            Color::None => " "
+            Color::None => " ",
         };
         let string_type = match &self.piece_type {
             PieceType::Bishop => "B",
@@ -50,9 +50,8 @@ impl fmt::Display for Piece {
     }
 }
 
-
 pub struct Board {
-    // Holds a 2d array of the pieces of the board. 
+    // Holds a 2d array of the pieces of the board.
     // The first index is the column, the second is the row.
     pieces: [[Piece; 8]; 8],
 
@@ -62,33 +61,90 @@ pub struct Board {
 
 impl Board {
     pub fn new() -> Self {
-        let mut pieces = [[Piece{piece_type: PieceType::Empty, color: Color::None}; 8]; 8];
+        let mut pieces = [[Piece {
+            piece_type: PieceType::Empty,
+            color: Color::None,
+        }; 8]; 8];
         let turn = true;
 
-        pieces[0][0] = Piece{piece_type: PieceType::Rook, color: Color::White};
-        pieces[0][1] = Piece{piece_type: PieceType::Knight, color: Color::White};
-        pieces[0][2] = Piece{piece_type: PieceType::Bishop, color: Color::White};
-        pieces[0][3] = Piece{piece_type: PieceType::Queen, color: Color::White};
-        pieces[0][4] = Piece{piece_type: PieceType::King, color: Color::White};
-        pieces[0][5] = Piece{piece_type: PieceType::Bishop, color: Color::White};
-        pieces[0][6] = Piece{piece_type: PieceType::Knight, color: Color::White};
-        pieces[0][7] = Piece{piece_type: PieceType::Rook, color: Color::White};
+        pieces[0][0] = Piece {
+            piece_type: PieceType::Rook,
+            color: Color::White,
+        };
+        pieces[0][1] = Piece {
+            piece_type: PieceType::Knight,
+            color: Color::White,
+        };
+        pieces[0][2] = Piece {
+            piece_type: PieceType::Bishop,
+            color: Color::White,
+        };
+        pieces[0][3] = Piece {
+            piece_type: PieceType::Queen,
+            color: Color::White,
+        };
+        pieces[0][4] = Piece {
+            piece_type: PieceType::King,
+            color: Color::White,
+        };
+        pieces[0][5] = Piece {
+            piece_type: PieceType::Bishop,
+            color: Color::White,
+        };
+        pieces[0][6] = Piece {
+            piece_type: PieceType::Knight,
+            color: Color::White,
+        };
+        pieces[0][7] = Piece {
+            piece_type: PieceType::Rook,
+            color: Color::White,
+        };
 
-        pieces[7][0] = Piece{piece_type: PieceType::Rook, color: Color::Black};
-        pieces[7][1] = Piece{piece_type: PieceType::Knight, color: Color::Black};
-        pieces[7][2] = Piece{piece_type: PieceType::Bishop, color: Color::Black};
-        pieces[7][3] = Piece{piece_type: PieceType::Queen, color: Color::Black};
-        pieces[7][4] = Piece{piece_type: PieceType::King, color: Color::Black};
-        pieces[7][5] = Piece{piece_type: PieceType::Bishop, color: Color::Black};
-        pieces[7][6] = Piece{piece_type: PieceType::Knight, color: Color::Black};
-        pieces[7][7] = Piece{piece_type: PieceType::Rook, color: Color::Black};
+        pieces[7][0] = Piece {
+            piece_type: PieceType::Rook,
+            color: Color::Black,
+        };
+        pieces[7][1] = Piece {
+            piece_type: PieceType::Knight,
+            color: Color::Black,
+        };
+        pieces[7][2] = Piece {
+            piece_type: PieceType::Bishop,
+            color: Color::Black,
+        };
+        pieces[7][3] = Piece {
+            piece_type: PieceType::Queen,
+            color: Color::Black,
+        };
+        pieces[7][4] = Piece {
+            piece_type: PieceType::King,
+            color: Color::Black,
+        };
+        pieces[7][5] = Piece {
+            piece_type: PieceType::Bishop,
+            color: Color::Black,
+        };
+        pieces[7][6] = Piece {
+            piece_type: PieceType::Knight,
+            color: Color::Black,
+        };
+        pieces[7][7] = Piece {
+            piece_type: PieceType::Rook,
+            color: Color::Black,
+        };
 
         for row in 0..8 {
-            pieces[1][row] = Piece{piece_type: PieceType::Pawn, color: Color::White};
-            pieces[6][row] = Piece{piece_type: PieceType::Pawn, color: Color::Black};
+            pieces[1][row] = Piece {
+                piece_type: PieceType::Pawn,
+                color: Color::White,
+            };
+            pieces[6][row] = Piece {
+                piece_type: PieceType::Pawn,
+                color: Color::Black,
+            };
         }
 
-        Board{pieces, turn}
+        Board { pieces, turn }
     }
 
     fn can_bishop_move(&self, start_point: Point, end_point: Point) -> bool {
@@ -138,19 +194,32 @@ impl Board {
         }
     }
 
-    pub fn can_move(&self, start_point: Point, end_point: Point) -> bool {
+    fn can_move(&self, start_point: Point, end_point: Point) -> bool {
         let start_piece = &self.pieces[start_point.col][start_point.row];
         let end_piece = &self.pieces[end_point.col][end_point.row];
-        
         let mut can_move = self.is_turn(start_piece);
         can_move &= self.can_piece_move(start_point, end_point);
         can_move
+    }
+
+    pub fn make_move(&mut self, start_point: Point, end_point: Point) -> bool {
+        if self.can_move(start_point, end_point) {
+            self.pieces[end_point.col][end_point.row] =
+                self.pieces[start_point.col][start_point.row];
+            self.pieces[start_point.col][start_point.row] = Piece {
+                piece_type: PieceType::Empty,
+                color: Color::None,
+            };
+            true
+        } else {
+            false
+        }
     }
 }
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut string_output:String  = String::from("");
+        let mut string_output: String = String::from("");
         for row in self.pieces.iter() {
             for piece in row {
                 string_output = string_output + &piece.to_string() + " ";

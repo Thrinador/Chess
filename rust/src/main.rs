@@ -1,11 +1,39 @@
 mod board;
+use text_io;
+
+fn parse_input() -> board::Point {
+    let mut col: usize = 8;
+    let mut row: usize = 8;
+    while col > 7 && row > 7 {
+        println!("Enter your move :");
+        let word: String = text_io::read!();
+        col = match word.chars().nth(0).unwrap() {
+            'A' => 0,
+            'B' => 1,
+            'C' => 2,
+            'D' => 3,
+            'E' => 4,
+            'F' => 5,
+            'G' => 6,
+            'H' => 7,
+            _ => 8,
+        };
+        row = word.chars().nth(1).unwrap() as usize - '0' as usize - 1;
+    }
+    println!("{}, {}", col, row);
+    board::Point { col, row }
+}
+
+fn get_move() -> (board::Point, board::Point) {
+    (parse_input(), parse_input())
+}
 
 fn main() {
-    let board = board::Board::new();
+    let mut board = board::Board::new();
 
-    println!("{}", board);
-    let mut line = String::new();
-    println!("Enter your move :");
-    std::io::stdin().read_line(&mut line).unwrap();
-    println!("{}", line);
+    loop {
+        println!("{}", board);
+        let (start_point, end_point) = get_move();
+        board.make_move(start_point, end_point);
+    }
 }
