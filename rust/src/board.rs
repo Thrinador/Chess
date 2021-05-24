@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 enum Color {
     White,
     Black,
@@ -52,7 +52,7 @@ impl fmt::Display for Piece {
 
 pub struct Board {
     // Holds a 2d array of the pieces of the board.
-    // The first index is the column, the second is the row.
+    // The first index is the row, the second is the column.
     pieces: [[Piece; 8]; 8],
 
     // Boolean of whose turn it is
@@ -147,42 +147,98 @@ impl Board {
         Board { pieces, turn }
     }
 
-    fn can_bishop_move(&self, start_point: Point, end_point: Point) -> bool {
-        true
-    }
-
     fn can_king_move(&self, start_point: Point, end_point: Point) -> bool {
         true
     }
 
     fn can_knight_move(&self, start_point: Point, end_point: Point) -> bool {
+        ((start_point.row as i32 - end_point.row as i32).abs() == 1
+            && (start_point.col as i32 - end_point.col as i32).abs() == 2)
+            || ((start_point.row as i32 - end_point.row as i32).abs() == 2
+                && (start_point.col as i32 - end_point.col as i32).abs() == 1)
+    }
+
+    fn is_empty(&self, point: Point) -> bool {
+        self.pieces[point.row][point.col].piece_type == PieceType::Empty
+    }
+
+    fn enpassant_check(&self, start_point: Point, end_point: Point) -> bool {
         true
     }
 
     fn can_pawn_move(&self, start_point: Point, end_point: Point) -> bool {
-        true
+        let piece_color = self.pieces[start_point.row][start_point.col].color;
+        // Make sure the pawns are moving in the right direction
+        if (piece_color == Color::White && start_point.col <= end_point.col)
+            || (piece_color == Color::Black && start_point.col >= end_point.col)
+        {
+            return false;
+        }
+
+        // Movement
+        if start_point.col == end_point.col {
+            // Can't take a piece from normal movement
+            if !self.is_empty(end_point) {
+                return false;
+            }
+            // Normal one space move forward
+            if (start_point.row as i32 - end_point.row as i32).abs() == 1 {
+                return true;
+            }
+            // Double move forward if on starting line
+            if (start_point.row as i32 - end_point.row as i32).abs() == 2 {
+                if piece_color == Color::White {
+                    return self.is_empty(Point {
+                        row: end_point.row + 1,
+                        col: end_point.col,
+                    });
+                } else if piece_color == Color::Black {
+                    return self.is_empty(Point {
+                        row: end_point.row - 1,
+                        col: end_point.col,
+                    });
+                }
+            }
+        }
+        // Taking a Piece
+        else if (start_point.col as i32 - end_point.col as i32).abs() == 1 {
+            return ((start_point.row as i32 - end_point.row as i32).abs() == 1
+                && !self.is_empty(end_point))
+                || self.enpassant_check(start_point, end_point);
+        }
+        false
     }
 
-    fn can_queen_move(&self, start_point: Point, end_point: Point) -> bool {
-        true
+    fn diagonal_movement_check(&self, start_point: Point, end_point: Point) -> bool {
+        (start_point.row as i32 - end_point.row as i32).abs()
+            == (start_point.col as i32 - end_point.col as i32).abs()
     }
 
-    fn can_rook_move(&self, start_point: Point, end_point: Point) -> bool {
-        true
+    fn horizontal_movement_check(&self, start_point: Point, end_point: Point) -> bool {
+        (start_point.col != end_point.col && start_point.row == end_point.row)
+            || (start_point.row != end_point.row && start_point.col != end_point.col)
     }
 
     fn can_piece_move(&self, start_point: Point, end_point: Point) -> bool {
         let start_piece = &self.pieces[start_point.col][start_point.row];
         let end_piece = &self.pieces[end_point.col][end_point.row];
 
+        if start_piece.color == end_piece.color {
+            println!("Can't take your own piece.");
+            return false;
+        }
+
         match &start_piece.piece_type {
-            PieceType::Bishop => self.can_bishop_move(start_point, end_point),
+            PieceType::Bishop => self.diagonal_movement_check(start_point, end_point),
             PieceType::Empty => false,
             PieceType::King => self.can_king_move(start_point, end_point),
             PieceType::Knight => self.can_knight_move(start_point, end_point),
             PieceType::Pawn => self.can_pawn_move(start_point, end_point),
-            PieceType::Queen => self.can_queen_move(start_point, end_point),
-            PieceType::Rook => self.can_rook_move(start_point, end_point),
+            PieceType::Queen => {
+                self.diagonal_movement_check(start_point, end_point)
+                    || self.horizontal_movement_check(start_point, end_point)
+            }
+            PieceType::Rook => self.horizontal_movement_check(start_point, end_point),
         }
     }
 
@@ -195,8 +251,8 @@ impl Board {
     }
 
     fn can_move(&self, start_point: Point, end_point: Point) -> bool {
-        let start_piece = &self.pieces[start_point.col][start_point.row];
-        let end_piece = &self.pieces[end_point.col][end_point.row];
+        let start_piece = &self.pieces[start_point.row][start_point.col];
+        let end_piece = &self.pieces[end_point.row][end_point.col];
         let mut can_move = self.is_turn(start_piece);
         can_move &= self.can_piece_move(start_point, end_point);
         can_move
@@ -204,12 +260,13 @@ impl Board {
 
     pub fn make_move(&mut self, start_point: Point, end_point: Point) -> bool {
         if self.can_move(start_point, end_point) {
-            self.pieces[end_point.col][end_point.row] =
-                self.pieces[start_point.col][start_point.row];
-            self.pieces[start_point.col][start_point.row] = Piece {
+            self.pieces[end_point.row][end_point.col] =
+                self.pieces[start_point.row][start_point.col];
+            self.pieces[start_point.row][start_point.col] = Piece {
                 piece_type: PieceType::Empty,
                 color: Color::None,
             };
+            self.turn = !self.turn;
             true
         } else {
             false
@@ -220,12 +277,15 @@ impl Board {
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut string_output: String = String::from("");
-        for row in self.pieces.iter() {
-            for piece in row {
-                string_output = string_output + &piece.to_string() + " ";
+        for row in 0..8 {
+            string_output = string_output + &(8 - row).to_string() + " | ";
+            for col in 0..8 {
+                string_output = string_output + &self.pieces[7 - row][7 - col].to_string() + " ";
             }
             string_output = string_output + "\n";
         }
+        string_output = string_output + "    -----------------------\n";
+        string_output = string_output + "    A  B  C  D  E  F  G  H";
         write!(f, "{}", string_output)
     }
 }
