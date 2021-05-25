@@ -1,4 +1,6 @@
 mod board;
+mod piece;
+
 use text_io;
 
 fn parse_input() -> board::Point {

@@ -1,54 +1,15 @@
-use std::fmt;
+use crate::piece::Color;
+use crate::piece::Piece;
+use crate::piece::PieceType;
+
+use std::collections::HashMap;
 use std::cmp;
-
-#[derive(Copy, Clone, PartialEq)]
-enum Color {
-    White,
-    Black,
-    None,
-}
-
-#[derive(Copy, Clone, PartialEq)]
-enum PieceType {
-    Bishop,
-    Empty,
-    King,
-    Knight,
-    Pawn,
-    Queen,
-    Rook,
-}
+use std::fmt;
 
 #[derive(Copy, Clone)]
 pub struct Point {
     pub col: usize,
     pub row: usize,
-}
-
-#[derive(Copy, Clone)]
-struct Piece {
-    piece_type: PieceType,
-    color: Color,
-}
-
-impl fmt::Display for Piece {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let string_color = match &self.color {
-            Color::Black => "B",
-            Color::White => "W",
-            Color::None => " ",
-        };
-        let string_type = match &self.piece_type {
-            PieceType::Bishop => "B",
-            PieceType::Empty => " ",
-            PieceType::King => "K",
-            PieceType::Knight => "N",
-            PieceType::Pawn => "P",
-            PieceType::Queen => "Q",
-            PieceType::Rook => "R",
-        };
-        write!(f, "{}{}", string_color, string_type)
-    }
 }
 
 pub struct Board {
@@ -58,10 +19,25 @@ pub struct Board {
 
     // Boolean of whose turn it is
     turn: bool,
+
+    // If a pawn made a double move forward last move,
+    // then this holds that piece. Used for Enpassant.
+    double_move_pawn: Option<Piece>,
+
+    // Counter checking if a stalemate has occured.
+    stalemate_counter: u16,
+
+    // Hashmap that holds copies of the board. If there is ever a value of 3
+    // in one of the bucks the game is a draw.
+    three_repetition: HashMap<[[Piece; 8]; 8], i32>,
 }
 
 impl Board {
     pub fn new() -> Self {
+        let three_repetition = HashMap::new();
+        let stalemate_counter = 0;
+        let double_move_pawn = None; 
+
         let mut pieces = [[Piece {
             piece_type: PieceType::Empty,
             color: Color::None,
@@ -145,7 +121,7 @@ impl Board {
             };
         }
 
-        Board { pieces, turn }
+        Board { pieces, turn, three_repetition, stalemate_counter, double_move_pawn }
     }
 
     fn can_king_move(&self, start_point: Point, end_point: Point) -> bool {
@@ -189,15 +165,9 @@ impl Board {
             // Double move forward if on starting line
             if (start_point.row as i32 - end_point.row as i32).abs() == 2 {
                 if piece_color == Color::White {
-                    return self.is_empty(Point {
-                        row: end_point.row + 1,
-                        col: end_point.col,
-                    });
+                    return self.pieces[end_point.row + 1][end_point.col].is_empty();
                 } else if piece_color == Color::Black {
-                    return self.is_empty(Point {
-                        row: end_point.row - 1,
-                        col: end_point.col,
-                    });
+                    return self.pieces[end_point.row - 1][end_point.col].is_empty();
                 }
             }
         }
