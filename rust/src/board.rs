@@ -1,4 +1,5 @@
 use std::fmt;
+use std::cmp;
 
 #[derive(Copy, Clone, PartialEq)]
 enum Color {
@@ -210,13 +211,57 @@ impl Board {
     }
 
     fn diagonal_movement_check(&self, start_point: Point, end_point: Point) -> bool {
-        (start_point.row as i32 - end_point.row as i32).abs()
-            == (start_point.col as i32 - end_point.col as i32).abs()
+        ((start_point.row as i32 - end_point.row as i32).abs()
+            == (start_point.col as i32 - end_point.col as i32).abs())
+            && self.diagonal_check_for_pieces(start_point, end_point)
+    }
+
+    fn diagonal_check_for_pieces(&self, start_point: Point, end_point: Point) -> bool {
+        let min_row = cmp::min(start_point.row, end_point.row);
+        let max_row = cmp::max(start_point.row, end_point.row);
+        let min_col = cmp::min(start_point.col, end_point.col);
+        let max_col = cmp::max(start_point.col, end_point.col);
+        if end_point.col - end_point.row == start_point.col - start_point.row {
+            for (row, col) in (min_row + 1 .. max_row).zip(min_col + 1 .. max_col) {
+                if !self.is_empty(Point {row, col}) {
+                    return false;
+                }
+            }
+        } else {
+            for (row, col) in (min_row + 1 .. max_row).zip((min_col + 1 .. max_col).rev()) {
+                if !self.is_empty(Point {row, col}) {
+                    return false;
+                }
+            }
+        }
+        true
     }
 
     fn horizontal_movement_check(&self, start_point: Point, end_point: Point) -> bool {
-        (start_point.col != end_point.col && start_point.row == end_point.row)
-            || (start_point.row != end_point.row && start_point.col != end_point.col)
+        ((start_point.col != end_point.col && start_point.row == end_point.row)
+            || (start_point.row != end_point.row && start_point.col != end_point.col))
+            && self.horizontal_check_for_pieces(start_point, end_point)
+    }
+
+    fn horizontal_check_for_pieces(&self, start_point: Point, end_point: Point) -> bool {
+        if start_point.col == end_point.col {
+            let min_row = cmp::min(start_point.row, end_point.row);
+            let max_row = cmp::max(start_point.row, end_point.row);
+            for row in min_row + 1..max_row {
+                if !self.is_empty(Point { row: row, col: start_point.col}) {
+                    return false;
+                }
+            }
+        } else {
+            let min_col = cmp::min(start_point.col, end_point.col);
+            let max_col = cmp::max(start_point.col, end_point.col);
+            for col in min_col + 1..max_col {
+                if !self.is_empty(Point { row: start_point.row, col: col}) {
+                    return false;
+                }
+            }
+        }
+        true
     }
 
     fn can_piece_move(&self, start_point: Point, end_point: Point) -> bool {
