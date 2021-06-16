@@ -22,7 +22,6 @@ fn parse_input() -> board::Point {
         };
         row = word.chars().nth(1).unwrap() as usize - '0' as usize - 1;
     }
-    println!("{}, {}", col, row);
     board::Point { col, row }
 }
 
@@ -36,6 +35,7 @@ fn main() {
     loop {
         println!("{}", board);
         let (start_point, end_point) = get_move();
+        println!("{}, {}", start_point, end_point);
         board.make_move(start_point, end_point);
     }
 }
