@@ -35,8 +35,8 @@ pub struct Board {
     turn: bool,
 
     // If a pawn made a double move forward last move,
-    // then this holds that piece. Used for Enpassant.
-    double_move_pawn: Option<Piece>,
+    // then this holds that piece location. Used for Enpassant.
+    double_move_pawn: Option<Point>,
 
     // Counter checking if a stalemate has occured.
     stalemate_counter: u16,
@@ -44,6 +44,9 @@ pub struct Board {
     // Hashmap that holds copies of the board. If there is ever a value of 3
     // in one of the bucks the game is a draw.
     three_repetition: HashMap<[[Piece; 8]; 8], i32>,
+
+    // If an enpassant occured, then there will be a piece that needs to be removed.
+    enpassant_piece_to_remove: Option<Point>,
 }
 
 impl Board {
@@ -51,6 +54,7 @@ impl Board {
         let three_repetition = HashMap::new();
         let stalemate_counter = 0;
         let double_move_pawn = None;
+        let enpassant_piece_to_remove = None;
 
         let mut pieces = [[Piece {
             piece_type: PieceType::Empty,
@@ -141,6 +145,7 @@ impl Board {
             three_repetition,
             stalemate_counter,
             double_move_pawn,
+            enpassant_piece_to_remove,
         }
     }
 
@@ -163,15 +168,27 @@ impl Board {
         self.pieces[point.row][point.col].piece_type == PieceType::Empty
     }
 
-    fn enpassant_check(&self, start_point: Point, end_point: Point) -> bool {
-        true
+    fn enpassant_check(&mut self, start_point: Point, end_point: Point) -> bool {
+        // Can enpassant only if the last move was a double pawn move
+        if let Some(other_point) = self.double_move_pawn {
+            // Check that the pawn moved in the appropriate direction only one square
+            if (end_point.row as i32 - other_point.row as i32).abs() == 1
+                && (start_point.col as i32 - other_point.col as i32).abs() == 1
+                && end_point.col == other_point.col
+                && start_point.row == other_point.row
+            {
+                self.enpassant_piece_to_remove = Some(other_point);
+                return true;
+            }
+        }
+        false
     }
 
-    fn can_pawn_move(&self, start_point: Point, end_point: Point) -> bool {
+    fn can_pawn_move(&mut self, start_point: Point, end_point: Point) -> bool {
         let piece_color = self.pieces[start_point.row][start_point.col].color;
         // Make sure the pawns are moving in the right direction
-        if (piece_color == Color::White && start_point.col <= end_point.col)
-            || (piece_color == Color::Black && start_point.col >= end_point.col)
+        if (piece_color == Color::White && start_point.row >= end_point.row)
+            || (piece_color == Color::Black && start_point.row <= end_point.row)
         {
             return false;
         }
@@ -201,10 +218,11 @@ impl Board {
         }
         // Taking a Piece
         else if (start_point.col as i32 - end_point.col as i32).abs() == 1
-            && ((start_point.row as i32 - end_point.row as i32).abs() == 1
-                && !self.is_empty(end_point))
-            || self.enpassant_check(start_point, end_point)
+            && (start_point.row as i32 - end_point.row as i32).abs() == 1
+            && !self.is_empty(end_point)
         {
+            return true;
+        } else if self.enpassant_check(start_point, end_point) {
             return true;
         }
         false
@@ -270,7 +288,7 @@ impl Board {
         true
     }
 
-    fn can_piece_move(&self, start_point: Point, end_point: Point) -> bool {
+    fn can_piece_move(&mut self, start_point: Point, end_point: Point) -> bool {
         match self.get_piece(start_point).piece_type {
             PieceType::Bishop => self.diagonal_movement_check(start_point, end_point),
             PieceType::Empty => false,
@@ -293,7 +311,7 @@ impl Board {
         }
     }
 
-    fn can_move(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
+    fn can_move(&mut self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
         let start_piece = &self.pieces[start_point.row][start_point.col];
         let end_piece = &self.pieces[end_point.row][end_point.col];
 
@@ -301,7 +319,7 @@ impl Board {
             Some(MoveFailure::NotTurn)
         } else if start_piece.color == end_piece.color {
             return Some(MoveFailure::CantTakeOwnPieces);
-        } else if self.can_piece_move(start_point, end_point) {
+        } else if !self.can_piece_move(start_point, end_point) {
             Some(MoveFailure::CantMoveThere)
         } else {
             None
@@ -318,12 +336,33 @@ impl Board {
             }
             false
         } else {
+            // If there were no move failures then we need to move the starting piece
+            // to the ending location and clear the starting square
             self.pieces[end_point.row][end_point.col] =
                 self.pieces[start_point.row][start_point.col];
             self.pieces[start_point.row][start_point.col] = Piece {
                 piece_type: PieceType::Empty,
                 color: Color::None,
             };
+
+            // We need to track if the last move was a pawn move two squares forward for en passant
+            if self.pieces[end_point.row][end_point.col].piece_type == PieceType::Pawn
+                && (start_point.row as i32 - end_point.row as i32).abs() == 2
+            {
+                self.double_move_pawn = Some(end_point);
+            } else {
+                self.double_move_pawn = None;
+            }
+
+            // When an enpassant occurs there is an extra piece that needs to be removed
+            if let Some(point_to_remove) = self.enpassant_piece_to_remove {
+                self.pieces[point_to_remove.row][point_to_remove.col] = Piece {
+                    piece_type: PieceType::Empty,
+                    color: Color::None,
+                };
+                self.enpassant_piece_to_remove = None;
+            }
+
             self.turn = !self.turn;
             true
         }
@@ -334,11 +373,11 @@ impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut string_output: String = String::from("\n");
         for row in 0..8 {
-            string_output = string_output + &(8 - row).to_string() + " | ";
+            let mut line = String::from("");
             for col in 0..8 {
-                string_output = string_output + &self.pieces[7 - row][7 - col].to_string() + " ";
+                line = line + &self.pieces[7 - row][col].to_string() + " ";
             }
-            string_output = string_output + "\n";
+            string_output = string_output + &(8 - row).to_string() + " | " + &line + "\n";
         }
         string_output = string_output + "    -----------------------\n";
         string_output = string_output + "    A  B  C  D  E  F  G  H\n";
