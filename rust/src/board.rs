@@ -6,10 +6,24 @@ use std::collections::HashMap;
 use std::cmp;
 use std::fmt;
 
+#[derive(Copy, Clone, PartialEq)]
+pub enum MoveFailure {
+    NotTurn,
+    CantTakeOwnPieces,
+    CantMoveThere,
+    InCheck,
+}
+
 #[derive(Copy, Clone)]
 pub struct Point {
     pub col: usize,
     pub row: usize,
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {})", self.row, self.col)
+    }
 }
 
 pub struct Board {
@@ -124,15 +138,19 @@ impl Board {
         Board { pieces, turn, three_repetition, stalemate_counter, double_move_pawn }
     }
 
-    fn can_king_move(&self, start_point: Point, end_point: Point) -> bool {
-        true
+    fn can_king_move(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
+        None
     }
 
-    fn can_knight_move(&self, start_point: Point, end_point: Point) -> bool {
-        ((start_point.row as i32 - end_point.row as i32).abs() == 1
+    fn can_knight_move(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
+        if ((start_point.row as i32 - end_point.row as i32).abs() == 1
             && (start_point.col as i32 - end_point.col as i32).abs() == 2)
             || ((start_point.row as i32 - end_point.row as i32).abs() == 2
-                && (start_point.col as i32 - end_point.col as i32).abs() == 1)
+                && (start_point.col as i32 - end_point.col as i32).abs() == 1) {
+                    None 
+                } else {
+                    Some(MoveFailure::CantMoveThere)
+                }
     }
 
     fn is_empty(&self, point: Point) -> bool {
@@ -143,50 +161,54 @@ impl Board {
         true
     }
 
-    fn can_pawn_move(&self, start_point: Point, end_point: Point) -> bool {
+    fn can_pawn_move(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
         let piece_color = self.pieces[start_point.row][start_point.col].color;
         // Make sure the pawns are moving in the right direction
         if (piece_color == Color::White && start_point.col <= end_point.col)
             || (piece_color == Color::Black && start_point.col >= end_point.col)
         {
-            return false;
+            return Some(MoveFailure::CantMoveThere);
         }
 
         // Movement
         if start_point.col == end_point.col {
             // Can't take a piece from normal movement
             if !self.is_empty(end_point) {
-                return false;
+                return Some(MoveFailure::CantMoveThere);
             }
             // Normal one space move forward
             if (start_point.row as i32 - end_point.row as i32).abs() == 1 {
-                return true;
+                return None;
             }
             // Double move forward if on starting line
             if (start_point.row as i32 - end_point.row as i32).abs() == 2 {
-                if piece_color == Color::White {
-                    return self.pieces[end_point.row + 1][end_point.col].is_empty();
-                } else if piece_color == Color::Black {
-                    return self.pieces[end_point.row - 1][end_point.col].is_empty();
+                if piece_color == Color::White && self.pieces[end_point.row + 1][end_point.col].is_empty() {
+                    return None;
+                } else if piece_color == Color::Black && self.pieces[end_point.row - 1][end_point.col].is_empty(){
+                    return None;
                 }
             }
         }
         // Taking a Piece
-        else if (start_point.col as i32 - end_point.col as i32).abs() == 1 {
-            return ((start_point.row as i32 - end_point.row as i32).abs() == 1
-                && !self.is_empty(end_point))
-                || self.enpassant_check(start_point, end_point);
+        else if (start_point.col as i32 - end_point.col as i32).abs() == 1 && ((start_point.row as i32 - end_point.row as i32).abs() == 1
+        && !self.is_empty(end_point))
+        || self.enpassant_check(start_point, end_point) {
+            return None;
         }
-        false
+        Some(MoveFailure::CantMoveThere)
     }
 
-    fn diagonal_movement_check(&self, start_point: Point, end_point: Point) -> bool {
-        ((start_point.row as i32 - end_point.row as i32).abs()
+    fn diagonal_movement_check(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
+        if ((start_point.row as i32 - end_point.row as i32).abs()
             == (start_point.col as i32 - end_point.col as i32).abs())
-            && self.diagonal_check_for_pieces(start_point, end_point)
+            && self.diagonal_check_for_pieces(start_point, end_point) {
+                None
+            } else {
+                Some(MoveFailure::CantMoveThere)
+            }
     }
 
-    fn diagonal_check_for_pieces(&self, start_point: Point, end_point: Point) -> bool {
+    fn diagonal_check_for_pieces(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
         let min_row = cmp::min(start_point.row, end_point.row);
         let max_row = cmp::max(start_point.row, end_point.row);
         let min_col = cmp::min(start_point.col, end_point.col);
@@ -194,32 +216,36 @@ impl Board {
         if end_point.col - end_point.row == start_point.col - start_point.row {
             for (row, col) in (min_row + 1 .. max_row).zip(min_col + 1 .. max_col) {
                 if !self.is_empty(Point {row, col}) {
-                    return false;
+                    return Some(MoveFailure::CantMoveThere);
                 }
             }
         } else {
             for (row, col) in (min_row + 1 .. max_row).zip((min_col + 1 .. max_col).rev()) {
                 if !self.is_empty(Point {row, col}) {
-                    return false;
+                    return Some(MoveFailure::CantMoveThere);
                 }
             }
         }
-        true
+        None
     }
 
-    fn horizontal_movement_check(&self, start_point: Point, end_point: Point) -> bool {
-        ((start_point.col != end_point.col && start_point.row == end_point.row)
+    fn horizontal_movement_check(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
+        if ((start_point.col != end_point.col && start_point.row == end_point.row)
             || (start_point.row != end_point.row && start_point.col != end_point.col))
-            && self.horizontal_check_for_pieces(start_point, end_point)
+            && self.horizontal_check_for_pieces(start_point, end_point) {
+                None
+            } else {
+                Some(MoveFailure::CantMoveThere);
+            }
     }
 
-    fn horizontal_check_for_pieces(&self, start_point: Point, end_point: Point) -> bool {
+    fn horizontal_check_for_pieces(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
         if start_point.col == end_point.col {
             let min_row = cmp::min(start_point.row, end_point.row);
             let max_row = cmp::max(start_point.row, end_point.row);
             for row in min_row + 1..max_row {
                 if !self.is_empty(Point { row: row, col: start_point.col}) {
-                    return false;
+                    return Some(MoveFailure::CantMoveThere);
                 }
             }
         } else {
@@ -227,22 +253,24 @@ impl Board {
             let max_col = cmp::max(start_point.col, end_point.col);
             for col in min_col + 1..max_col {
                 if !self.is_empty(Point { row: start_point.row, col: col}) {
-                    return false;
+                    return Some(MoveFailure::CantMoveThere);
                 }
             }
         }
-        true
+        None
     }
 
-    fn can_piece_move(&self, start_point: Point, end_point: Point) -> bool {
-        let start_piece = &self.pieces[start_point.col][start_point.row];
-        let end_piece = &self.pieces[end_point.col][end_point.row];
+    fn can_piece_move(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
+        let start_piece = &self.pieces[start_point.row][start_point.col];
+        let end_piece = &self.pieces[end_point.row][end_point.col];
 
         if start_piece.color == end_piece.color {
-            println!("Can't take your own piece.");
-            return false;
+            return Some(MoveFailure::CantTakeOwnPieces);
         }
 
+
+        // Do I want all of these subfunction returning a simple boolean? Or do I want to make them an option<MoveFailure> to give the ability in the future
+        // to add some return like values?
         match &start_piece.piece_type {
             PieceType::Bishop => self.diagonal_movement_check(start_point, end_point),
             PieceType::Empty => false,
@@ -265,26 +293,30 @@ impl Board {
         }
     }
 
-    fn can_move(&self, start_point: Point, end_point: Point) -> bool {
+    fn can_move(&self, start_point: Point, end_point: Point) -> Option<MoveFailure> {
         let start_piece = &self.pieces[start_point.row][start_point.col];
         let end_piece = &self.pieces[end_point.row][end_point.col];
-        let mut can_move = self.is_turn(start_piece);
-        can_move &= self.can_piece_move(start_point, end_point);
-        can_move
+        if !self.is_turn(start_piece) {
+            Some(MoveFailure::NotTurn)
+        } else {
+            self.can_piece_move(start_point, end_point)
+        }
     }
 
     pub fn make_move(&mut self, start_point: Point, end_point: Point) -> bool {
-        if self.can_move(start_point, end_point) {
-            self.pieces[end_point.row][end_point.col] =
+        let can_move = self.can_move(start_point, end_point)
+        match can_move {
+            None => {
+                self.pieces[end_point.row][end_point.col] =
                 self.pieces[start_point.row][start_point.col];
-            self.pieces[start_point.row][start_point.col] = Piece {
-                piece_type: PieceType::Empty,
-                color: Color::None,
-            };
-            self.turn = !self.turn;
-            true
-        } else {
-            false
+                self.pieces[start_point.row][start_point.col] = Piece {
+                    piece_type: PieceType::Empty,
+                    color: Color::None,
+                };
+                self.turn = !self.turn;
+                true
+            },
+            _ => false
         }
     }
 }
