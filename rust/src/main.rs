@@ -7,7 +7,6 @@ fn parse_input() -> board::Point {
     let mut col: usize = 8;
     let mut row: usize = 8;
     while col > 7 && row > 7 {
-        println!("Enter your move :");
         let word: String = text_io::read!();
         col = match word.chars().nth(0).unwrap() {
             'A' => 0,
@@ -26,6 +25,7 @@ fn parse_input() -> board::Point {
 }
 
 fn get_move() -> (board::Point, board::Point) {
+    println!("Enter your move :");
     (parse_input(), parse_input())
 }
 
