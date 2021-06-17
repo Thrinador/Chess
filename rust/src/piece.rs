@@ -22,9 +22,18 @@ pub enum PieceType {
 pub struct Piece {
     pub piece_type: PieceType,
     pub color: Color,
+    pub has_moved: bool,
 }
 
 impl Piece {
+    pub fn new() -> Self {
+        Piece {
+            piece_type: PieceType::Empty,
+            color: Color::None,
+            has_moved: false,
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.piece_type == PieceType::Empty
     }

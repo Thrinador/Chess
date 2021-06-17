@@ -20,6 +20,15 @@ pub struct Point {
     pub row: usize,
 }
 
+impl Point {
+    pub fn move_position(&self, row: i32, col: i32) -> Point {
+        Point {
+            col: (self.col as i32 + col).abs() as usize,
+            row: (self.row as i32 + row).abs() as usize,
+        }
+    }
+}
+
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({}, {})", self.row, self.col)
@@ -56,87 +65,50 @@ impl Board {
         let double_move_pawn = None;
         let enpassant_piece_to_remove = None;
 
-        let mut pieces = [[Piece {
-            piece_type: PieceType::Empty,
-            color: Color::None,
-        }; 8]; 8];
+        let mut pieces = [[Piece::new(); 8]; 8];
         let turn = true;
 
-        pieces[0][0] = Piece {
+        let mut piece = Piece {
             piece_type: PieceType::Rook,
             color: Color::White,
+            has_moved: false,
         };
-        pieces[0][1] = Piece {
-            piece_type: PieceType::Knight,
-            color: Color::White,
-        };
-        pieces[0][2] = Piece {
-            piece_type: PieceType::Bishop,
-            color: Color::White,
-        };
-        pieces[0][3] = Piece {
-            piece_type: PieceType::Queen,
-            color: Color::White,
-        };
-        pieces[0][4] = Piece {
-            piece_type: PieceType::King,
-            color: Color::White,
-        };
-        pieces[0][5] = Piece {
-            piece_type: PieceType::Bishop,
-            color: Color::White,
-        };
-        pieces[0][6] = Piece {
-            piece_type: PieceType::Knight,
-            color: Color::White,
-        };
-        pieces[0][7] = Piece {
-            piece_type: PieceType::Rook,
-            color: Color::White,
-        };
+        pieces[0][0] = piece;
+        pieces[0][7] = piece;
+        piece.color = Color::Black;
+        pieces[7][0] = piece;
+        pieces[7][7] = piece;
 
-        pieces[7][0] = Piece {
-            piece_type: PieceType::Rook,
-            color: Color::Black,
-        };
-        pieces[7][1] = Piece {
-            piece_type: PieceType::Knight,
-            color: Color::Black,
-        };
-        pieces[7][2] = Piece {
-            piece_type: PieceType::Bishop,
-            color: Color::Black,
-        };
-        pieces[7][3] = Piece {
-            piece_type: PieceType::Queen,
-            color: Color::Black,
-        };
-        pieces[7][4] = Piece {
-            piece_type: PieceType::King,
-            color: Color::Black,
-        };
-        pieces[7][5] = Piece {
-            piece_type: PieceType::Bishop,
-            color: Color::Black,
-        };
-        pieces[7][6] = Piece {
-            piece_type: PieceType::Knight,
-            color: Color::Black,
-        };
-        pieces[7][7] = Piece {
-            piece_type: PieceType::Rook,
-            color: Color::Black,
-        };
+        piece.piece_type = PieceType::Knight;
+        pieces[7][1] = piece;
+        pieces[7][6] = piece;
+        piece.color = Color::White;
+        pieces[0][1] = piece;
+        pieces[0][6] = piece;
 
+        piece.piece_type = PieceType::Bishop;
+        pieces[0][2] = piece;
+        pieces[0][5] = piece;
+        piece.color = Color::Black;
+        pieces[7][2] = piece;
+        pieces[7][5] = piece;
+
+        piece.piece_type = PieceType::Queen;
+        pieces[7][3] = piece;
+        piece.color = Color::White;
+        pieces[0][3] = piece;
+
+        piece.piece_type = PieceType::King;
+        pieces[0][4] = piece;
+        piece.color = Color::Black;
+        pieces[7][4] = piece;
+
+        piece.piece_type = PieceType::Pawn;
         for row in 0..8 {
-            pieces[1][row] = Piece {
-                piece_type: PieceType::Pawn,
-                color: Color::White,
-            };
-            pieces[6][row] = Piece {
-                piece_type: PieceType::Pawn,
-                color: Color::Black,
-            };
+            pieces[6][row] = piece;
+            piece.color = Color::White;
+            pieces[1][row] = piece;
+            piece.color = Color::Black;
         }
 
         Board {
@@ -153,8 +125,78 @@ impl Board {
         &self.pieces[point.row][point.col]
     }
 
+    fn in_check(&self, point: Point) -> bool {
+        // TODO
+        false
+    }
+
+    // Checks if moving a piece from the start_point to the end_point will cause the king to be in check.
+    fn check_move_wont_check(&self, start_point: Point, end_point: Point) -> bool {
+        // TODO
+        false
+    }
+
     fn can_king_move(&self, start_point: Point, end_point: Point) -> bool {
-        true
+        // Castling
+        if !self.get_piece(start_point).has_moved
+            && (start_point.col as i32 - end_point.col as i32).abs() == 2
+            && (start_point.row as i32 - end_point.row as i32).abs() == 0
+        {
+            // Make sure the king has not moved and that it is not in check
+            if self.get_piece(start_point).has_moved || self.in_check(start_point) {
+                return false;
+            }
+
+            // King side
+            if start_point.col < end_point.col {
+                // Check to see if there is a piece in the way.
+                if !self.is_empty(start_point.move_position(1, 0))
+                    || !self.is_empty(start_point.move_position(2, 0))
+                {
+                    return false;
+                }
+
+                // Check to make sure the king wont go through check
+                if self.check_move_wont_check(start_point, start_point.move_position(0, 1))
+                    || self.check_move_wont_check(start_point, start_point.move_position(0, 2))
+                {
+                    return false;
+                }
+
+                // Make sure there is a rook where it should be and that is hasn't moved.
+                let rook = self.get_piece(start_point.move_position(0, 3));
+                if rook.piece_type == PieceType::Rook && !rook.has_moved {
+                    // TODO: Similar to enpassant figure out how to make the rook move with the king.
+                    return true;
+                }
+            } else {
+                // Check to see if there is a piece in the way.
+                if !self.is_empty(start_point.move_position(-1, 0))
+                    || !self.is_empty(start_point.move_position(-2, 0))
+                {
+                    return false;
+                }
+
+                // Check to make sure the king wont go through check
+                if self.check_move_wont_check(start_point, start_point.move_position(0, -1))
+                    || self.check_move_wont_check(start_point, start_point.move_position(0, -2))
+                {
+                    return false;
+                }
+
+                // Make sure there is a rook where it should be and that is hasn't moved.
+                let rook = self.get_piece(start_point.move_position(0, -4));
+                if rook.piece_type == PieceType::Rook && !rook.has_moved {
+                    // TODO: Similar to enpassant figure out how to make the rook move with the king.
+                    return true;
+                }
+            }
+
+            false
+        } else {
+            (start_point.col as i32 - end_point.col as i32).abs() < 2
+                && (start_point.row as i32 - end_point.row as i32).abs() < 2
+        }
     }
 
     fn can_knight_move(&self, start_point: Point, end_point: Point) -> bool {
@@ -343,6 +385,7 @@ impl Board {
             self.pieces[start_point.row][start_point.col] = Piece {
                 piece_type: PieceType::Empty,
                 color: Color::None,
+                has_moved: false,
             };
 
             // We need to track if the last move was a pawn move two squares forward for en passant
@@ -356,10 +399,7 @@ impl Board {
 
             // When an enpassant occurs there is an extra piece that needs to be removed
             if let Some(point_to_remove) = self.enpassant_piece_to_remove {
-                self.pieces[point_to_remove.row][point_to_remove.col] = Piece {
-                    piece_type: PieceType::Empty,
-                    color: Color::None,
-                };
+                self.pieces[point_to_remove.row][point_to_remove.col] = Piece::new();
                 self.enpassant_piece_to_remove = None;
             }
 
